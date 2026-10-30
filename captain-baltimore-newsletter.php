@@ -2,8 +2,15 @@
 /**
  * Plugin Name: Captain Baltimore Newsletter Bridge
  * Description: Exposes a secure REST endpoint so n8n can create and send newsletters through The Newsletter Plugin.
- * Version: 1.1.0
+ * Version: 1.1.1
  * Author: Captain Baltimore
+ *
+ * 1.1.1 (2026-10-25): Fix the subscribers table name in the recipient query.
+ * TNP's users table is {prefix}newsletter (constant NEWSLETTER_USERS_TABLE),
+ * NOT {prefix}newsletter_users — v1.1.0's query hit a nonexistent table, the
+ * delivery engine flagged the issue 'error' with a database error, and
+ * nothing was sent (proven by the Lisa-only test issue 320). Use the TNP
+ * constant when defined.
  *
  * 1.1.0 (2026-10-25): Fix the send hand-off to match The Newsletter Plugin 9.x
  * native format. v1.0.0 inserted status as integer 1 and send_on as 0, but the
@@ -172,7 +179,7 @@ function cb_bridge_handle_request( WP_REST_Request $request ) {
     // (emails/edit.php): all confirmed subscribers, optionally narrowed
     // to the requested lists (list_N = 1 conditions, OR-combined).
     // -----------------------------------------------------------------------
-    $users_table = $wpdb->prefix . 'newsletter_users';
+    $users_table = defined( 'NEWSLETTER_USERS_TABLE' ) ? NEWSLETTER_USERS_TABLE : $wpdb->prefix . 'newsletter';
     $query       = "select * from {$users_table} where status='C'";
     if ( $list_ids ) {
         $list_where = [];
